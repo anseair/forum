@@ -49,6 +49,9 @@ public class AuthenticationFilter implements Filter {
 				return;
 			}
 			String[] credentials = getCredentialsFromToken(token);
+			
+//			System.out.println(credentials[0]);
+//			System.out.println(credentials[1]);
 
 			UserAccount userAccount = userAccountRepository.findById(credentials[0]).orElseThrow(() -> new UserNotFoundException());
 			if (!credentials[1].equals(userAccount.getPassword())) {
