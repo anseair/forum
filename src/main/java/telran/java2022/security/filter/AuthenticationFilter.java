@@ -1,6 +1,7 @@
 package telran.java2022.security.filter;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Base64;
 
 import javax.servlet.Filter;
@@ -9,17 +10,20 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 import telran.java2022.accounting.dao.UserAccountRepository;
-import telran.java2022.accounting.dto.exceptions.UserNotFoundException;
 import telran.java2022.accounting.model.UserAccount;
 
 @Component
 @RequiredArgsConstructor
+@Order(10)
 public class AuthenticationFilter implements Filter {
 
 	/*
@@ -48,16 +52,19 @@ public class AuthenticationFilter implements Filter {
 				response.sendError(401);
 				return;
 			}
-			String[] credentials = getCredentialsFromToken(token);
-			
-//			System.out.println(credentials[0]);
-//			System.out.println(credentials[1]);
-
-			UserAccount userAccount = userAccountRepository.findById(credentials[0]).orElseThrow(() -> new UserNotFoundException());
-			if (!credentials[1].equals(userAccount.getPassword())) {
-				response.sendError(401, "The password entered is invalid.");
+			String[] credentials;
+			try {
+				credentials = getCredentialsFromToken(token);
+			} catch (Exception e) {
+				response.sendError(401, "Invalid token");
+				return;			
+			}
+			UserAccount userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
+			if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
+				response.sendError(401, "Login or password is invalid.");
 				return; 
 			}
+			request = new WrappedRequest(request, userAccount.getLogin());
 
 		}
 //		System.out.println(request.getHeader("Authorization"));
@@ -74,7 +81,24 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return !("POST".equalsIgnoreCase(method) && servletPath.equals("/account/register"));
+		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?"));
+	}
+	
+	private class WrappedRequest extends HttpServletRequestWrapper {
+		String login;
+		public WrappedRequest(HttpServletRequest request, String login) {
+			super(request);
+			this.login = login;
+		}
+		
+		@Override
+		public Principal getUserPrincipal() {
+			return () -> login;
+			
+		}
+		
+	
+		
 	}
 
 }
