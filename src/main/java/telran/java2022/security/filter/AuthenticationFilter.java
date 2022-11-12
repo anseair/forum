@@ -60,7 +60,11 @@ public class AuthenticationFilter implements Filter {
 				return;			
 			}
 			UserAccount userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
-			if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
+//			if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
+//				response.sendError(401, "Login or password is invalid.");
+//				return; 
+//			}
+			if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
 				response.sendError(401, "Login or password is invalid.");
 				return; 
 			}
