@@ -35,7 +35,7 @@ public class ChangePostFilter implements Filter {
 			String uri = request.getRequestURI().toString();
 			String idPost = uri.substring(uri.lastIndexOf("/")).replace("/", "");
 			Post post = postRepository.findById(idPost).orElse(null);
-			System.out.println(idPost);
+//			System.out.println(idPost);
 
 			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
 			
@@ -45,12 +45,17 @@ public class ChangePostFilter implements Filter {
 			}
 		} else {
 			
-			//TODO delete post (owner + administrator)
+			//TODO delete post (owner + moderator)
 			if (chenkEndPointDelete(request.getMethod(), request.getServletPath())) {
 				String uri = request.getRequestURI().toString();
 				String idPost = uri.substring(uri.lastIndexOf("/")).replace("/", "");
 				Post post = postRepository.findById(idPost).orElse(null);
 				System.out.println(idPost);
+				
+//				String uri = request.getServletPath().toString();
+//				String idPost = uri.substring(uri.lastIndexOf("/")).replace("/", "");
+//				Post post = postRepository.findById(idPost).orElse(null);
+//				System.out.println(idPost);
 				
 				UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
 				if (!post.getAuthor().equals(userAccount.getLogin())

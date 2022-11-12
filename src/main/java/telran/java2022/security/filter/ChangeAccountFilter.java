@@ -33,7 +33,7 @@ public class ChangeAccountFilter implements Filter {
 			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
 			String uri = request.getRequestURI().toString();
 			String user = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-			System.out.println(user);
+//			System.out.println(user);
 			if (!user.equals(userAccount.getLogin())) {
 				response.sendError(403, "Invalid user");
 				return;
