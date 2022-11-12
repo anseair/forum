@@ -52,11 +52,6 @@ public class ChangePostFilter implements Filter {
 				Post post = postRepository.findById(idPost).orElse(null);
 				System.out.println(idPost);
 				
-//				String uri = request.getServletPath().toString();
-//				String idPost = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-//				Post post = postRepository.findById(idPost).orElse(null);
-//				System.out.println(idPost);
-				
 				UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
 				if (!post.getAuthor().equals(userAccount.getLogin())
 						&& !userAccount.getRoles().contains("Moderator".toUpperCase())) {

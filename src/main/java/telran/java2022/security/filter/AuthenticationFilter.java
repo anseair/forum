@@ -85,7 +85,10 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?"));
+		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?")) &&
+				!("GET".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/author/\\w+/?")) && 
+				!("POST".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/tags/?")) &&
+				!("POST".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/period/?"));
 	}
 	
 	private class WrappedRequest extends HttpServletRequestWrapper {
