@@ -18,13 +18,15 @@ import telran.java2022.accounting.dao.UserAccountRepository;
 import telran.java2022.accounting.model.UserAccount;
 import telran.java2022.post.dao.PostRepository;
 import telran.java2022.post.model.Post;
+import telran.java2022.security.context.SecurityContext;
+import telran.java2022.security.context.User;
 
 @Component
 @RequiredArgsConstructor
 @Order(70)
 public class DeletePostFilter implements Filter {
 
-	final UserAccountRepository userAccountRepository;
+	final SecurityContext context;
 	final PostRepository postRepository;
 	
 	@Override
@@ -32,7 +34,6 @@ public class DeletePostFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		
 		
 		//TODO delete post (owner + moderator)
 		if (chenkEndPointDeletePost(request.getMethod(), request.getServletPath())) {
@@ -43,8 +44,8 @@ public class DeletePostFilter implements Filter {
 				response.sendError(404, "post id = " + idPost + " not found");
 				return;
 			}
-			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-			if (!post.getAuthor().equals(userAccount.getLogin())
+			User userAccount = context.getUser(request.getUserPrincipal().getName());
+			if (!post.getAuthor().equals(userAccount.getUserName())
 					&& !userAccount.getRoles().contains("Moderator".toUpperCase())) {
 				response.sendError(403, "Invalid user or no moderator privileges");
 				return;

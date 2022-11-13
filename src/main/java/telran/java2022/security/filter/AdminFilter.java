@@ -23,8 +23,7 @@ import telran.java2022.security.context.User;
 @Order(20)
 public class AdminFilter implements Filter {
 
-	final UserAccountRepository userAccountRepository;
-//	final SecurityContext context;
+	final SecurityContext context;
 	
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -32,8 +31,7 @@ public class AdminFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) { 
-//			User userAccount = context.getUser(request.getUserPrincipal().getName());
-			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
+			User userAccount = context.getUser(request.getUserPrincipal().getName());
 			if (!userAccount.getRoles().contains("Administrator".toUpperCase())) {
 				response.sendError(403);
 				return;
