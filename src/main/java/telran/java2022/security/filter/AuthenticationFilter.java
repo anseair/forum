@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import telran.java2022.accounting.dao.UserAccountRepository;
 import telran.java2022.accounting.model.UserAccount;
+import telran.java2022.security.context.SecurityContext;
+import telran.java2022.security.context.User;
 
 @Component
 @RequiredArgsConstructor
@@ -38,6 +40,7 @@ public class AuthenticationFilter implements Filter {
 	 */
 
 	final UserAccountRepository userAccountRepository;
+	final SecurityContext context;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -69,7 +72,12 @@ public class AuthenticationFilter implements Filter {
 //				return; 
 //			}
 			request = new WrappedRequest(request, userAccount.getLogin());
-
+			User user = User.builder()
+							.userName(userAccount.getLogin())
+							.password(userAccount.getPassword())
+							.roles(userAccount.getRoles())
+							.build();
+			context.addUser(user);
 		}
 //		System.out.println(request.getHeader("Authorization"));
 //		System.out.println(request.getMethod());
@@ -85,14 +93,13 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?")) &&
-				!("GET".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/author/\\w+/?")) && 
-				!("POST".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/tags/?")) &&
-				!("POST".equalsIgnoreCase(method) && servletPath.matches("/forum/posts/period/?"));
+		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?") || 
+				(servletPath.matches("/forum/posts(/\\w+)+/?")));
 	}
 	
 	private class WrappedRequest extends HttpServletRequestWrapper {
 		String login;
+		
 		public WrappedRequest(HttpServletRequest request, String login) {
 			super(request);
 			this.login = login;

@@ -1,6 +1,7 @@
 package telran.java2022.security.filter;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -10,6 +11,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,8 @@ import telran.java2022.accounting.model.UserAccount;
 
 @Component
 @RequiredArgsConstructor
-public class ChangeAccountFilter implements Filter {
+@Order(40)
+public class UpdateUserFilter implements Filter {
 
 	final UserAccountRepository userAccountRepository;
 
@@ -27,31 +30,18 @@ public class ChangeAccountFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		
-		//TODO update User (owner)
+
+		// TODO update User (owner)
 		if (chenkEndPointUpdate(request.getMethod(), request.getServletPath())) {
-			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-			String uri = request.getRequestURI().toString();
-			String user = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-//			System.out.println(user);
-			if (!user.equals(userAccount.getLogin())) {
+			String path = request.getServletPath();
+			Principal principal = request.getUserPrincipal();
+			String[] arr = path.split("/");
+			String user = arr[arr.length - 1];
+			if (!user.equals(principal.getName())) {
 				response.sendError(403, "Invalid user");
 				return;
 			}
-		} else {
-			
-			//TODO delete User (owner + administrator)
-			if (chenkEndPointDelete(request.getMethod(), request.getServletPath())) {
-				String uri = request.getRequestURI().toString();
-				String user = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-				System.out.println(user);
-				UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-				if (!user.equals(userAccount.getLogin())
-						&& !userAccount.getRoles().contains("Administrator".toUpperCase())) {
-					response.sendError(403, "Invalid user or no administrator privileges");
-					return;
-				}
-			}
+
 		}
 
 		chain.doFilter(request, response);
@@ -60,10 +50,6 @@ public class ChangeAccountFilter implements Filter {
 
 	private boolean chenkEndPointUpdate(String method, String servletPath) {
 		return ("PUT".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?"));
-	}
-
-	private boolean chenkEndPointDelete(String method, String servletPath) {
-		return ("DELETE".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?"));
 	}
 
 
