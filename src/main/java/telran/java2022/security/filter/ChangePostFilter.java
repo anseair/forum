@@ -1,6 +1,7 @@
 package telran.java2022.security.filter;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -35,7 +36,24 @@ public class ChangePostFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 		
 		//TODO update post (owner)
+//		String path = request.getServletPath();
 		if (chenkEndPointUpdate(request.getMethod(), request.getServletPath())) {
+			
+//			Principal principal = request.getUserPrincipal();
+//			String[] arr = path.split("/");
+//			String postId = arr[arr.length - 1];
+//			Post post = postRepository.findById(postId).orElse(null);
+//			if (post == null) {
+//				response.sendError(404, "post id = " + postId + " not found");
+//				return;
+//			}
+//			String author = post.getAuthor();
+//			if (!principal.getName().equals(author)) {
+//				response.sendError(403);
+//				return;
+//			}
+			
+			
 			String uri = request.getRequestURI().toString();
 			String idPost = uri.substring(uri.lastIndexOf("/")).replace("/", "");
 			Post post = postRepository.findById(idPost).orElse(null);
