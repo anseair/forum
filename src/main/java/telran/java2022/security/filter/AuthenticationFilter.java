@@ -30,12 +30,14 @@ import telran.java2022.security.service.SessionService;
 public class AuthenticationFilter implements Filter {
 
 	/*
-	 * request - объект который, инкапсулирует http запрос (какие методы, какие заголовки, какой бади и тд) 
-	 * пришло тест(HttpRequest), томкат завернёт всё в объект, поместил в servlerRequest
+	 * request - объект который, инкапсулирует http запрос (какие методы, какие
+	 * заголовки, какой бади и тд) пришло тест(HttpRequest), томкат завернёт всё в
+	 * объект, поместил в servlerRequest
 	 * 
-	 * когда к томкату пришёл request (это обычный plain text), но servlet это уже java object и они работают с java object
-	 * томкат взял request и всю информацию, которая здесь была трасформировал в java object
-	 * тип этого объекта httpServletRequest и мы можем получить у него header, method
+	 * когда к томкату пришёл request (это обычный plain text), но servlet это уже
+	 * java object и они работают с java object томкат взял request и всю
+	 * информацию, которая здесь была трасформировал в java object тип этого объекта
+	 * httpServletRequest и мы можем получить у него header, method
 	 * 
 	 * 
 	 */
@@ -49,11 +51,11 @@ public class AuthenticationFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		
-		if (checkEndPoint(request.getMethod(), request.getServletPath())) { 
+
+		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			String sessionId = request.getSession().getId();
 			UserAccount userAccount = sessionService.getUser(sessionId);
-			if(userAccount == null) {
+			if (userAccount == null) {
 				String token = request.getHeader("Authorization");
 				if (token == null) {
 					response.sendError(401);
@@ -64,26 +66,45 @@ public class AuthenticationFilter implements Filter {
 					credentials = getCredentialsFromToken(token);
 				} catch (Exception e) {
 					response.sendError(401, "Invalid token");
-					return;			
+					return;
 				}
 				userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
 				if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
 					response.sendError(401, "Login or password is invalid.");
-					return; 
+					return;
 				}
 //				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
 //					response.sendError(401, "Login or password is invalid.");
 //					return; 
 //				}
 				sessionService.addUser(sessionId, userAccount);
+			} else {
+				String token = request.getHeader("Authorization");
+				if (token != null) {
+					sessionService.removeUser(sessionId);
+					String[] credentials;
+					try {
+						credentials = getCredentialsFromToken(token);
+					} catch (Exception e) {
+						response.sendError(401, "Invalid token");
+						return;
+					}
+					userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
+					if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
+						response.sendError(401, "Login or password is invalid.");
+						return;
+					}
+//				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
+//					response.sendError(401, "Login or password is invalid.");
+//					return; 
+//				}
+					sessionService.addUser(sessionId, userAccount);
+				}
 			}
 
 			request = new WrappedRequest(request, userAccount.getLogin());
-			User user = User.builder()
-							.userName(userAccount.getLogin())
-							.password(userAccount.getPassword())
-							.roles(userAccount.getRoles())
-							.build();
+			User user = User.builder().userName(userAccount.getLogin()).password(userAccount.getPassword())
+					.roles(userAccount.getRoles()).build();
 			context.addUser(user);
 		}
 		chain.doFilter(request, response);
@@ -97,26 +118,24 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?") || 
-				(servletPath.matches("/forum/posts(/\\w+)+/?")));
+		return !("POST".equalsIgnoreCase(method) && servletPath.matches("/account/register/?")
+				|| (servletPath.matches("/forum/posts(/\\w+)+/?")));
 	}
-	
+
 	private class WrappedRequest extends HttpServletRequestWrapper {
 		String login;
-		
+
 		public WrappedRequest(HttpServletRequest request, String login) {
 			super(request);
 			this.login = login;
 		}
-		
+
 		@Override
 		public Principal getUserPrincipal() {
 			return () -> login;
-			
+
 		}
-		
-	
-		
+
 	}
 
 }
