@@ -47,8 +47,10 @@ public class AuthenticationFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
+		
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) { // если говорит что true, то выполянется
 																			// какая-то логика
+			String sessionId = request.getSession().getId();
 			// authentication
 			String token = request.getHeader("Authorization");
 			if (token == null) {

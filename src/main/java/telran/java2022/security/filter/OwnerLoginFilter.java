@@ -25,6 +25,7 @@ public class OwnerLoginFilter implements Filter {
 
 	final PostRepository postRepository;
 	final UserAccountRepository userAccountRepository;
+	
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
