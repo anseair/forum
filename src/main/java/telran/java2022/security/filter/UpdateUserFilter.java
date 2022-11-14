@@ -10,7 +10,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,7 @@ import telran.java2022.accounting.model.UserAccount;
 
 @Component
 @RequiredArgsConstructor
-public class ChangeAccountFilter implements Filter {
+public class UpdateUserFilter implements Filter {
 
 	final UserAccountRepository userAccountRepository;
 
@@ -29,42 +28,20 @@ public class ChangeAccountFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		
-		//TODO update User (owner)
-		if (chenkEndPointUpdate(request.getMethod(), request.getServletPath())) {
-			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
+		if (chenkEndPoint(request.getMethod(), request.getServletPath())) {
 			String uri = request.getRequestURI().toString();
 			String user = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-//			System.out.println(user);
+			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
 			if (!user.equals(userAccount.getLogin())) {
-				response.sendError(403, "Invalid user");
+				response.sendError(403, "No such user exists");
 				return;
 			}
-		} else {
-			
-			//TODO delete User (owner + administrator)
-			if (chenkEndPointDelete(request.getMethod(), request.getServletPath())) {
-				String uri = request.getRequestURI().toString();
-				String user = uri.substring(uri.lastIndexOf("/")).replace("/", "");
-				UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-				if (!user.equals(userAccount.getLogin())
-						&& !userAccount.getRoles().contains("Administrator".toUpperCase())) {
-					response.sendError(403, "Invalid user or no administrator privileges");
-					return;
-				}
-			}
 		}
-
 		chain.doFilter(request, response);
-
 	}
 
-	private boolean chenkEndPointUpdate(String method, String servletPath) {
+	private boolean chenkEndPoint(String method, String servletPath) {
 		return ("PUT".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?"));
 	}
-
-	private boolean chenkEndPointDelete(String method, String servletPath) {
-		return ("DELETE".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?"));
-	}
-
 
 }
