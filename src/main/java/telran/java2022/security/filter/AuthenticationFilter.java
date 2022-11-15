@@ -55,12 +55,10 @@ public class AuthenticationFilter implements Filter {
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			String sessionId = request.getSession().getId();
 			UserAccount userAccount = sessionService.getUser(sessionId);
-			if (userAccount == null) {
-				String token = request.getHeader("Authorization");
-				if (token == null) {
-					response.sendError(401);
-					return;
-				}
+
+			String token = request.getHeader("Authorization");
+			if (token != null) {
+				sessionService.removeUser(sessionId);
 				String[] credentials;
 				try {
 					credentials = getCredentialsFromToken(token);
@@ -73,32 +71,15 @@ public class AuthenticationFilter implements Filter {
 					response.sendError(401, "Login or password is invalid.");
 					return;
 				}
-//				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
-//					response.sendError(401, "Login or password is invalid.");
-//					return; 
-//				}
+//			if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
+//				response.sendError(401, "Login or password is invalid.");
+//				return; 
+//			}
 				sessionService.addUser(sessionId, userAccount);
 			} else {
-				String token = request.getHeader("Authorization");
-				if (token != null) {
-					sessionService.removeUser(sessionId);
-					String[] credentials;
-					try {
-						credentials = getCredentialsFromToken(token);
-					} catch (Exception e) {
-						response.sendError(401, "Invalid token");
-						return;
-					}
-					userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
-					if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
-						response.sendError(401, "Login or password is invalid.");
-						return;
-					}
-//				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
-//					response.sendError(401, "Login or password is invalid.");
-//					return; 
-//				}
-					sessionService.addUser(sessionId, userAccount);
+				if (userAccount == null && token == null) {
+					response.sendError(401);
+					return;
 				}
 			}
 
