@@ -22,6 +22,7 @@ import telran.java2022.security.service.SessionService;
 public class CleanSessionForAuthenticationFilter implements Filter {
 	final SessionService sessionService;
 
+	
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
@@ -31,6 +32,7 @@ public class CleanSessionForAuthenticationFilter implements Filter {
 			String sessionId = request.getSession().getId();
 			sessionService.removeUser(sessionId);
 		}
+		
 		chain.doFilter(request, response);
 	}
 
