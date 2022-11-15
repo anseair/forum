@@ -57,6 +57,13 @@ public class AuthenticationFilter implements Filter {
 			UserAccount userAccount = sessionService.getUser(sessionId);
 
 			String token = request.getHeader("Authorization");
+			
+			
+			if (userAccount == null && token == null) {
+				response.sendError(401);
+				return;
+			}
+			
 			if (token != null) {
 				sessionService.removeUser(sessionId);
 				String[] credentials;
@@ -71,16 +78,13 @@ public class AuthenticationFilter implements Filter {
 					response.sendError(401, "Login or password is invalid.");
 					return;
 				}
-//			if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
-//				response.sendError(401, "Login or password is invalid.");
-//				return; 
-//			}
+//				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
+//					response.sendError(401, "Login or password is invalid.");
+//					return; 
+//				}
 				sessionService.addUser(sessionId, userAccount);
 			} else {
-				if (userAccount == null && token == null) {
-					response.sendError(401);
-					return;
-				}
+				
 			}
 
 			request = new WrappedRequest(request, userAccount.getLogin());
