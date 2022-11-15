@@ -51,21 +51,15 @@ public class AuthenticationFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			String sessionId = request.getSession().getId();
 			UserAccount userAccount = sessionService.getUser(sessionId);
-
-			String token = request.getHeader("Authorization");
-			
-			
-			if (userAccount == null && token == null) {
-				response.sendError(401);
-				return;
-			}
-			
-			if (token != null) {
-				sessionService.removeUser(sessionId);
+			if (userAccount == null) {
+				String token = request.getHeader("Authorization");
+				if (token == null) {
+					response.sendError(401);
+					return;
+				}
 				String[] credentials;
 				try {
 					credentials = getCredentialsFromToken(token);
@@ -75,16 +69,15 @@ public class AuthenticationFilter implements Filter {
 				}
 				userAccount = userAccountRepository.findById(credentials[0]).orElse(null);
 				if (userAccount == null || !BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
-					response.sendError(401, "Login or password is invalid.");
+					response.sendError(401, "login or password is invalid");
 					return;
 				}
+
 //				if (userAccount == null || !credentials[1].equals(userAccount.getPassword())) {
 //					response.sendError(401, "Login or password is invalid.");
 //					return; 
 //				}
 				sessionService.addUser(sessionId, userAccount);
-			} else {
-				
 			}
 
 			request = new WrappedRequest(request, userAccount.getLogin());
@@ -95,6 +88,7 @@ public class AuthenticationFilter implements Filter {
 		chain.doFilter(request, response);
 	}
 
+	
 	private String[] getCredentialsFromToken(String token) {
 		String[] basicAuth = token.split(" ");
 		String decode = new String(Base64.getDecoder().decode(basicAuth[1]));
